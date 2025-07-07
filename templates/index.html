@@ -1,0 +1,53 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>Главная</title>
+  <style>
+    body {
+      font-family: Arial;
+      background-color: #f0f0f0;
+      margin: 0;
+      padding: 0;}
+    .header {
+      background-color: #ff5050;
+      padding: 20px;
+      text-align: center;}
+    .container {
+      display: flex;}
+    .menu {
+      width: 150px;
+      background: #f0f0f0;
+      padding: 20px;}
+    .content {
+      flex: 1;
+      padding: 20px;}
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Это сайт с уязвимостями</h1>
+  </div>
+  <div class="container">
+    <div class="menu">
+      <h3>Меню</h3>
+      <ul>
+        {% if 'username' in session %}
+          <li><a href="/profile">Профиль ({{ session['username'] }})</a></li>
+          <li><a href="/logout">Выйти</a></li>
+        {% else %}
+          <li><a href="/login">Вход</a></li>
+          <li><a href="/register">Регистрация</a></li>
+        {% endif %}
+      </ul>
+    </div>
+    <div class="content">
+      <p style="font-size: 20px; line-height: 1.5;">
+        Привет, пользователь. Ты находишься на приветственной странице сайта, которая <b>имеет недоработки в защите</b>. 
+        Эксплуатируй уязвимости и получи доступ к информации, которая не должна быть доступна обычным пользователям!
+      </p>
+      <p style="font-size: 20px; line-height: 1.5;">Выберите действие в меню слева.</p>
+    </div>
+  </div>
+</body>
+</html>

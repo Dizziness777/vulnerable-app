@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Профиль</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        .profile { max-width: 500px; margin: 0 auto; }
+        .admin-badge { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="profile">
+        <h2>Профиль пользователя</h2>
+        <p><strong>Логин:</strong> {{ username }}</p>
+        
+        {% if is_admin %}
+            <hr>
+            <p>Так как вы админ, то вам доступна база данных всех пользователей:</p>
+            <a href="/hidden_users_list">Список пользователей</a>
+        {% endif %}
+        
+        <a href="/logout">Выйти</a> <a href="/">На главную</a>
+    </div>
+</body>
+</html>
