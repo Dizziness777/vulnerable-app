@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, session
+from werkzeug.security import generate_password_hash, check_password_hash
 import psycopg2
 
 app = Flask(__name__)
@@ -30,7 +31,7 @@ def login():
             cur = conn.cursor()
             cur.execute("SELECT id, username, password, is_admin FROM uyazvimosti_web.users WHERE username = %s", (username,))
             user = cur.fetchone()
-            if user:
+            if user and check_password_hash(user[2], password):
                 session['username'] = user[1]
                 session['is_admin'] = user[3]
                 return redirect('/profile')
@@ -54,7 +55,8 @@ def register():
         try:
             conn = get_db()
             cur = conn.cursor()
-            cur.execute("INSERT INTO uyazvimosti_web.users (username, password, is_admin) VALUES (%s, %s, %s)", (username, password, False))
+            hashed_password = generate_password_hash(password)
+            cur.execute("INSERT INTO uyazvimosti_web.users (username, password, is_admin) VALUES (%s, %s, %s)", (username, hashed_password, False))
             conn.commit()
             return "Регистрация успешна <a href='/login'>Войти</a>"
         except Exception as e:
@@ -99,6 +101,8 @@ def logout():
 #БАЗА ДАННЫХ ПОЛЬЗОВАТЕЛЕЙ
 @app.route('/hidden_users_list')
 def users_list():
+    if 'username' not in session or not session.get('is_admin'):
+        return redirect('/login')
     try:
         conn = get_db()
         cur = conn.cursor()
@@ -116,6 +120,8 @@ def users_list():
 #ВЫДАЧА АДМИНКИ            
 @app.route('/make_admin', methods=['POST'])
 def make_admin():
+    if 'username' not in session or not session.get('is_admin'):
+        return redirect('/login')
     user_id = request.form['user_id']
     try:
         conn = get_db()
