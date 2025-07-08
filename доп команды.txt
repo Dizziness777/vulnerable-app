@@ -1,0 +1,100 @@
+-------------------СОЗДАНИЕ БД--------------------
+sudo apt install postgresql postgresql-contrib - установка postgreSQL
+sudo -u postgres psql - вход в консоль SQL
+CREATE DATABASE vuln_db; - создание базы данных
+\c vuln_db - подключение к бд
+CREATE SCHEMA uyazvimosti_web; - создание схемы
+CREATE USER vuln_user WITH PASSWORD 'weakpassword'; - создание пользователя
+
+выдача прав:
+GRANT ALL PRIVILEGES ON DATABASE vuln_db TO vuln_user;
+GRANT ALL PRIVILEGES ON SCHEMA uyazvimosti_web TO vuln_user;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA uyazvimosti_web TO vuln_user;
+
+создание таблицы:
+CREATE TABLE uyazvimosti_web.users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    password VARCHAR(50) NOT NULL,
+    is_admin BOOLEAN DEFAULT FALSE);
+
+добавление данных:
+INSERT INTO uyazvimosti_web.users (username, password, is_admin) 
+VALUES 
+    ('admin', '123', TRUE),
+    ('user1', 'abcd', FALSE);
+
+
+psql -h localhost -U vuln_user -d vuln_db - путь к схеме через консоль ubuntu
+weakpassword - пвароль
+\dt uyazvimosti_web.* - просмотр таблиц
+SELECT * FROM uyazvimosti_web.users; - вывод из таблицы для веб-приложения
+\q - выход из консоли sql
+
+-------------------УСТАНОВКА PYTHON---------------
+python -m venv venv - создание виртуального окружения
+source ~/venv/bin/activate - активация виртуального окружения
+pip install flask psycopg2-binary - установка библиотек в виртуальном окружении для обработчика
+
+
+-------------------SQL ИНЪЕКЦИИ	-------------------
+для логина:
+' OR 1=1 --     войти как первый пользователь из таблицы
+админ' --       войти как пользователь с логином "админ". Аналогично можно зайти с любым логином, если он известен
+' or id=1 --    войти как пользователь с id = 1
+
+для регистрации:
+admin', '123', true) --   создать пользователя с правами админа
+hacker', '123', 'false'); drop table uyazvimosti_web.users --
+hacker', 'pass', FALSE); DELETE FROM uyazvimosti_web.users WHERE id = 1; --  удаления пользователя с id = 1
+
+
+------------------ИСПРАВЛЕНИЕ SQL ИНЪЕКЦИЙ---------
+экранирование:
+логин:
+try:
+            conn = get_db()
+            cur = conn.cursor()
+            cur.execute("SELECT id, username, password, is_admin FROM uyazvimosti_web.users WHERE username = %s", (username,))
+            user = cur.fetchone()
+            if user:
+                session['username'] = user[1]
+                session['is_admin'] = user[3]
+                return redirect('/profile')
+            else:
+                return "Ошибка входа"
+        except Exception as e:
+            return f"Ошибка: {e}"
+        finally:
+            if 'conn' in locals():
+                conn.close()
+
+
+
+регистрация:
+try:
+            conn = get_db()
+            cur = conn.cursor()
+            cur.execute("INSERT INTO uyazvimosti_web.users (username, password, is_admin) VALUES (%s, %s, %s)", (username, password, False))
+            conn.commit()
+            return "Регистрация успешна <a href='/login'>Войти</a>"
+        except Exception as e:
+            return f"Ошибка: {e}"
+        finally:
+            if 'conn' in locals():
+                conn.close()
+
+
+
+------------В СЛУЧАЕ УДАЛЕНИЯ ТАБЛИЦЫ-------------
+\c vuln_db      подключение к бд
+
+создание таблицы:
+CREATE TABLE uyazvimosti_web.users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    password VARCHAR(50) NOT NULL,
+    is_admin BOOLEAN DEFAULT FALSE);
+
+
+delete from uyazvimosti_web.users where id = 6;  - удаление пользователя с id = 6 вручную
